@@ -55,8 +55,8 @@ python-dateutil==2.9.0.post0
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/Naveen0030/Expenses_Tracker.git
-cd expense-tracker
+git clone https://github.com/shalinipalla005/Walletwise.git
+cd Walletwise
 ```
 
 2. Create and activate a virtual environment:
@@ -150,7 +150,3 @@ Feel free to:
 - Streamlit for the amazing framework
 - The Python community for excellent libraries
 - Contributors and users of this project
-
-##  Contact
-
-For any queries or suggestions, please open an issue in the GitHub repository.
