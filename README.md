@@ -85,6 +85,7 @@ re
 
 ## 🗂️ Project Structure
 
+<<<<<<< HEAD
 ```
 walletwise/
 ├── streamlit_app.py          # Main application entry point
@@ -100,6 +101,12 @@ walletwise/
 ├── requirements.txt          # Python dependencies
 ├── README.md                # Project documentation
 └── walletwise.db            # SQLite database (created automatically)
+=======
+1. Clone the repository:
+```bash
+git clone https://github.com/shalinipalla005/Walletwise.git
+cd Walletwise
+>>>>>>> e41d37a4914010fbf0b5cbd423872aa6e1318b66
 ```
 
 ##  Usage Guide
@@ -175,6 +182,7 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ##  Known Issues & Troubleshooting
 
+<<<<<<< HEAD
 ### Common Issues
 1. **Database Lock Errors**: Restart the application if you encounter SQLite lock errors
 2. **Import Errors**: Ensure CSV files have the correct column format (date, amount, type)
@@ -203,3 +211,8 @@ If you encounter any issues:
 **Made using Python and Streamlit**
 
 *WalletWise - Take control of your finances, one transaction at a time.*
+=======
+- Streamlit for the amazing framework
+- The Python community for excellent libraries
+- Contributors and users of this project
+>>>>>>> e41d37a4914010fbf0b5cbd423872aa6e1318b66
