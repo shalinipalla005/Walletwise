@@ -44,7 +44,7 @@ venv.bak/
 
 # Project specific
 config.py
-expense_tracker.db
+walletwise.db
 
 # System specific
 .DS_Store

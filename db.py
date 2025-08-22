@@ -4,7 +4,7 @@ import datetime as dt
 from typing import Any, Dict, List, Optional , Tuple
 
 
-DB_PATH = os.getenv("EXPENSE_TRACKER_DB", os.path.join(os.getcwd(), "expense_tracker.db"))
+DB_PATH = os.getenv("EXPENSE_TRACKER_DB", os.path.join(os.getcwd(), "walletwise.db"))
 
 
 def _connect() -> sqlite3.Connection:
@@ -1047,32 +1047,44 @@ def get_user_balance_summary(user_id: int) -> Dict[str, Any]:
 
 
 def get_group_expense_statistics(user_id: int, days: int = 30) -> Dict[str, Any]:
-    """Get statistics for group expenses"""
+    """Get statistics for group expenses - showing user's actual financial involvement"""
     conn = _connect()
     cur = conn.cursor()
     
     start_date = (dt.date.today() - dt.timedelta(days=days)).isoformat()
     
     try:
-        # Recent expenses count and amount
+        # Get user's actual involvement amounts
         cur.execute(
             """
-            SELECT COUNT(DISTINCT ge.id) as count, COALESCE(SUM(ge.amount), 0) as total
+            SELECT 
+                COUNT(DISTINCT ge.id) as count,
+                COALESCE(SUM(
+                    CASE 
+                        WHEN ge.payer_id = ? THEN ge.amount
+                        ELSE COALESCE(ges.share_amount, 0)
+                    END
+                ), 0) as total
             FROM group_expenses ge
-            LEFT JOIN group_expense_shares ges ON ge.id = ges.group_expense_id
+            LEFT JOIN group_expense_shares ges ON ge.id = ges.group_expense_id AND ges.user_id = ?
             WHERE (ge.payer_id = ? OR ges.user_id = ?) AND ge.date >= ?
             """,
-            (user_id, user_id, start_date)
+            (user_id, user_id, user_id, user_id, start_date)
         )
         recent_stats = dict(cur.fetchone())
         
-        # Category breakdown
+        # Category breakdown - user's involvement per category
         cur.execute(
             """
             SELECT 
                 ge.category,
                 COUNT(DISTINCT ge.id) as expense_count,
-                SUM(CASE WHEN ge.payer_id = ? THEN ge.amount ELSE COALESCE(ges.share_amount, 0) END) as total_amount
+                SUM(
+                    CASE 
+                        WHEN ge.payer_id = ? THEN ge.amount
+                        ELSE COALESCE(ges.share_amount, 0)
+                    END
+                ) as total_amount
             FROM group_expenses ge
             LEFT JOIN group_expense_shares ges ON ge.id = ges.group_expense_id AND ges.user_id = ?
             WHERE (ge.payer_id = ? OR ges.user_id = ?) AND ge.date >= ?
@@ -1089,6 +1101,7 @@ def get_group_expense_statistics(user_id: int, days: int = 30) -> Dict[str, Any]
             'categories': categories,
             'period_days': days
         }
+        
     except Exception as e:
         print(f"Error in get_group_expense_statistics: {e}")
         return {
@@ -1099,7 +1112,6 @@ def get_group_expense_statistics(user_id: int, days: int = 30) -> Dict[str, Any]
         }
     finally:
         conn.close()
-
 
 def get_unsettled_expenses_for_user(user_id: int) -> List[Dict[str, Any]]:
     """Get all unsettled expenses where user owes money"""

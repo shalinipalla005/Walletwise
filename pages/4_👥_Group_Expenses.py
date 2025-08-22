@@ -78,6 +78,7 @@ tab_overview, tab_add, tab_expenses, tab_settle, tab_analytics = st.tabs([
     "🏠 Overview", "➕ Add Expense", "📋 All Expenses", "💳 Settle Up", "📊 Analytics"
 ])
 
+
 with tab_overview:
     st.subheader("Recent Activity")
     
@@ -106,10 +107,19 @@ with tab_overview:
                             st.caption(f"Your share: ₹{exp['share_amount']:,.2f}")
                     
                     with col3:
-                        if exp.get('is_settled'):
-                            st.success("✅ Settled")
+                        # Fixed logic: Check if user's share is settled, not the entire expense
+                        if exp['payer_id'] == st.session_state.auth["user_id"]:
+                            # If user is the payer, show overall expense status
+                            if exp.get('is_settled'):
+                                st.success("✅ All Settled")
+                            else:
+                                st.warning("⏳ Partially Paid")
                         else:
-                            st.warning("⏳ Pending")
+                            # If user is a participant, show their share status
+                            if exp.get('share_settled', True):  # Default to True if not found
+                                st.success("✅ Paid")
+                            else:
+                                st.warning("⏳ Pending")
                     
                     st.markdown("---")
         else:
@@ -118,21 +128,6 @@ with tab_overview:
     except Exception as e:
         st.error(f"Error loading recent expenses: {str(e)}")
     
-    # Show balance breakdown
-    if balance_summary['owes_to'] or balance_summary['owed_by']:
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            if balance_summary['owes_to']:
-                st.subheader("💸 You Owe")
-                for debt in balance_summary['owes_to']:
-                    st.write(f"**{debt['payer_name']}**: ₹{debt['total_owed']:,.2f}")
-        
-        with col2:
-            if balance_summary['owed_by']:
-                st.subheader("💰 Owed to You")
-                for credit in balance_summary['owed_by']:
-                    st.write(f"**{credit['user_name']}**: ₹{credit['total_owed_to_user']:,.2f}")
 
 with tab_add:
     st.subheader("➕ Add Group Expense")
@@ -330,7 +325,7 @@ with tab_expenses:
                     )
                 
                 with col2:
-                    action = st.selectbox("Action", ["View Details", "Edit", "Delete"])
+                    action = st.selectbox("Action", ["View Details", "Delete"])
                 
                 if selected_expense_id and action:
                     selected_expense = next((exp for exp in all_expenses 
@@ -351,11 +346,50 @@ with tab_expenses:
                                     if selected_expense.get('description'):
                                         st.write(f"**Description:** {selected_expense['description']}")
                                 
+                                # Enhanced share breakdown with proper names
                                 if 'shares' in selected_expense and selected_expense['shares']:
                                     st.write("**Share Breakdown:**")
-                                    for share in selected_expense['shares']:
-                                        status_icon = "✅" if share.get('is_settled') else "⏳"
-                                        st.write(f"• User {share['user_id']}: ₹{share['share_amount']:,.2f} {status_icon}")
+                                    
+                                    # Get all user names for the shares
+                                    try:
+                                        # Get all unique user IDs from shares
+                                        user_ids_in_shares = list(set(share['user_id'] for share in selected_expense['shares']))
+                                        
+                                        # Get user details for all participants
+                                        conn = db._connect()
+                                        cur = conn.cursor()
+                                        
+                                        if user_ids_in_shares:
+                                            placeholders = ','.join('?' * len(user_ids_in_shares))
+                                            cur.execute(f"SELECT id, name FROM users WHERE id IN ({placeholders})", user_ids_in_shares)
+                                            user_names = {row['id']: row['name'] for row in cur.fetchall()}
+                                            conn.close()
+                                            
+                                            # Display shares with proper formatting
+                                            for share in selected_expense['shares']:
+                                                user_name = user_names.get(share['user_id'], f"User {share['user_id']}")
+                                                status_icon = "✅" if share.get('is_settled') else "⏳"
+                                                
+                                                if share['user_id'] == st.session_state.auth["user_id"]:
+                                                    if selected_expense['payer_id'] == st.session_state.auth["user_id"]:
+                                                        # User is the payer - show as "I paid"
+                                                        st.write(f"• **{user_name} (You)**: ₹{share['share_amount']:,.2f} - **I paid this** ✅")
+                                                    else:
+                                                        # User owes money - show their share
+                                                        st.write(f"• **{user_name} (You)**: ₹{share['share_amount']:,.2f} {status_icon}")
+                                                else:
+                                                    # Other users
+                                                    st.write(f"• **{user_name}**: ₹{share['share_amount']:,.2f} {status_icon}")
+                                                    
+                                        else:
+                                            conn.close()
+                                            
+                                    except Exception as e:
+                                        st.error(f"Error loading share details: {str(e)}")
+                                        # Fallback to original display
+                                        for share in selected_expense['shares']:
+                                            status_icon = "✅" if share.get('is_settled') else "⏳"
+                                            st.write(f"• User {share['user_id']}: ₹{share['share_amount']:,.2f} {status_icon}")
                         
                         elif action == "Delete" and selected_expense['payer_id'] == st.session_state.auth["user_id"]:
                             st.warning("⚠️ Are you sure you want to delete this expense? This action cannot be undone.")
@@ -375,7 +409,7 @@ with tab_expenses:
             st.info("📝 No group expenses found. Create your first group expense using the 'Add Expense' tab!")
             
     except Exception as e:
-        st.error(f"Error loading expenses: {str(e)}")
+        st.error(f"Error loading expenses: {str(e)}")     
 
 with tab_settle:
     st.subheader("💳 Settle Up")
