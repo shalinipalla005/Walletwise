@@ -91,6 +91,7 @@ walletwise/
 ├── streamlit_app.py          # Main application entry point
 ├── db.py                     # Database operations and schema
 ├── auth.py                   # Authentication utilities
+├── Home.py
 ├── utils/
 │   └── session.py           # Session management utilities
 ├── pages/
@@ -182,7 +183,6 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ##  Known Issues & Troubleshooting
 
-<<<<<<< HEAD
 ### Common Issues
 1. **Database Lock Errors**: Restart the application if you encounter SQLite lock errors
 2. **Import Errors**: Ensure CSV files have the correct column format (date, amount, type)
@@ -195,12 +195,12 @@ If you encounter any issues:
 3. Verify Python version compatibility
 4. Create an issue on GitHub with detailed error information
 
-## 🌟 Future Enhancements
+## Future Enhancements
 
 - [ ] Mobile-responsive design improvements
+- [ ] Expense prediction using machine learning
 - [ ] Integration with bank APIs for automatic transaction import
 - [ ] Advanced budgeting features (yearly budgets, savings goals)
-- [ ] Expense prediction using machine learning
 - [ ] Multi-currency support
 - [ ] Receipt image upload and OCR processing
 - [ ] Email notifications for budget alerts
@@ -214,5 +214,3 @@ If you encounter any issues:
 =======
 - Streamlit for the amazing framework
 - The Python community for excellent libraries
-- Contributors and users of this project
->>>>>>> e41d37a4914010fbf0b5cbd423872aa6e1318b66
